@@ -1,3 +1,11 @@
 <resources>
     <string name="app_name">Shruggie</string>
+    <string name="shruggie">¯\\_(ツ)_/¯</string>
+    <string name="setup_step1_title">1 — Enable the keyboard</string>
+    <string name="setup_step1_body">Go to Settings → System → Language &amp; Input → On-screen keyboard → Manage keyboards and toggle Shruggie on.</string>
+    <string name="setup_step2_title">2 — Switch to Shruggie</string>
+    <string name="setup_step2_body">Open any app with a text field, tap the keyboard icon in the navigation bar, then select Shruggie.</string>
+    <string name="setup_step3_title">3 — Start shrugging</string>
+    <string name="setup_step3_body">Tap the button to insert ¯\\_(ツ)_/¯ into any text field.</string>
+    <string name="btn_keyboard_settings">Open Keyboard Settings</string>
 </resources>
