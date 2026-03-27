@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.widget.Button
+import android.widget.LinearLayout
 
 class ShrugKeyboardService : InputMethodService() {
 
@@ -25,7 +26,7 @@ class ShrugKeyboardService : InputMethodService() {
         val button = keyboardView.findViewById<Button>(R.id.shrug_button)
         // match_parent now works because the parent has an explicit height,
         // and padding on the parent gives the button 80% of the keyboard height
-        button.layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+        button.layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT)
         button.setOnClickListener { view ->
             view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
             currentInputConnection?.commitText("¯\\_(ツ)_/¯", 1)
