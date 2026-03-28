@@ -6,6 +6,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.widget.Button
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 
 class ShrugKeyboardService : InputMethodService() {
 
@@ -35,7 +37,10 @@ class ShrugKeyboardService : InputMethodService() {
 
     override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {
         super.onStartInputView(info, restarting)
-        val keyboardHeight = (resources.displayMetrics.heightPixels * 0.19).toInt()
-        window.window?.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, keyboardHeight)
+        val win = window.window ?: return
+        val navBarHeight = ViewCompat.getRootWindowInsets(win.decorView)
+            ?.getInsets(WindowInsetsCompat.Type.navigationBars())?.bottom ?: 0
+        val keyboardHeight = (resources.displayMetrics.heightPixels * 0.19).toInt() + navBarHeight
+        win.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, keyboardHeight)
     }
 }
