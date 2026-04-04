@@ -16,6 +16,10 @@ class ShrugKeyboardService : InputMethodService() {
     override fun onCreateInputView(): View {
         val keyboardView = layoutInflater.inflate(R.layout.keyboard_view, null)
 
+        keyboardView.addOnLayoutChangeListener { v, _, _, _, _, _, _, _, _ ->
+            Log.d(TAG, "keyboardView layout changed: width=${v.width}px, height=${v.height}px")
+        }
+
         keyboardView.findViewById<Button>(R.id.shrug_button).setOnClickListener { view ->
             view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
             currentInputConnection?.commitText("¯\\_(ツ)_/¯", 1)
@@ -48,7 +52,7 @@ class ShrugKeyboardService : InputMethodService() {
         val keyboardHeight = (screenHeight * 0.19).toInt() + navBarHeight
         Log.d(TAG, "onStartInputView: screenHeight=$screenHeight px, navBarHeight=$navBarHeight px, keyboardHeight=$keyboardHeight px")
         win.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, keyboardHeight)
-        Log.d(TAG, "onStartInputView: setLayout called with MATCH_PARENT x $keyboardHeight")
+        Log.d(TAG, "onStartInputView: win.attributes.height after setLayout = ${win.attributes.height}")
     }
 
     companion object {
@@ -56,8 +60,6 @@ class ShrugKeyboardService : InputMethodService() {
     }
 
     private fun navBarHeight(): Int {
-        // WindowManager.currentWindowMetrics is available from API 30 and queries the
-        // WindowManager service directly — reliable regardless of view attachment state.
         val height = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             val wm = getSystemService(WindowManager::class.java)
             wm.currentWindowMetrics.windowInsets
