@@ -34,7 +34,8 @@
             android:stateListAnimator="@null"
             android:text="↵"
             android:textColor="#FFFFFF"
-            android:textSize="18sp" />
+            android:textSize="26sp"
+            android:gravity="center" />
 
         <Button
             android:id="@+id/space_button"
@@ -44,9 +45,7 @@
             android:layout_marginEnd="4dp"
             android:background="@drawable/btn_shrug_background"
             android:stateListAnimator="@null"
-            android:text="space"
-            android:textColor="#FFFFFF"
-            android:textSize="14sp" />
+            android:text="" />
 
         <Button
             android:id="@+id/backspace_button"
