@@ -79,13 +79,18 @@ class ShrugKeyboardService : InputMethodService() {
     private fun navBarHeight(): Int {
         val height = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             val wm = getSystemService(WindowManager::class.java)
-            wm.currentWindowMetrics.windowInsets
-                .getInsets(WindowInsets.Type.navigationBars()).bottom
+            val insets = wm.currentWindowMetrics.windowInsets
+            Log.d(TAG, "insets navigationBars.bottom:       ${insets.getInsets(WindowInsets.Type.navigationBars()).bottom}")
+            Log.d(TAG, "insets systemBars.bottom:           ${insets.getInsets(WindowInsets.Type.systemBars()).bottom}")
+            Log.d(TAG, "insets tappableElement.bottom:      ${insets.getInsets(WindowInsets.Type.tappableElement()).bottom}")
+            Log.d(TAG, "insets mandatorySystemGestures.bot: ${insets.getInsets(WindowInsets.Type.mandatorySystemGestures()).bottom}")
+            Log.d(TAG, "insets systemGestures.bottom:       ${insets.getInsets(WindowInsets.Type.systemGestures()).bottom}")
+            insets.getInsets(WindowInsets.Type.navigationBars()).bottom
         } else {
             val resourceId = resources.getIdentifier("navigation_bar_height", "dimen", "android")
             if (resourceId > 0) resources.getDimensionPixelSize(resourceId) else 0
         }
-        Log.d(TAG, "navBarHeight: $height px")
+        Log.d(TAG, "navBarHeight returning: $height px")
         return height
     }
 
