@@ -1,13 +1,14 @@
 package com.apuroops.shruggie
 
 import android.inputmethodservice.InputMethodService
+import android.os.Build
 import android.view.HapticFeedbackConstants
 import android.view.View
 import android.view.ViewGroup
+import android.view.WindowInsets
+import android.view.WindowManager
 import android.view.inputmethod.EditorInfo
 import android.widget.Button
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 
 class ShrugKeyboardService : InputMethodService() {
 
@@ -38,9 +39,21 @@ class ShrugKeyboardService : InputMethodService() {
     override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {
         super.onStartInputView(info, restarting)
         val win = window.window ?: return
-        val navBarHeight = ViewCompat.getRootWindowInsets(win.decorView)
-            ?.getInsets(WindowInsetsCompat.Type.navigationBars())?.bottom ?: 0
+        val navBarHeight = navBarHeight()
         val keyboardHeight = (resources.displayMetrics.heightPixels * 0.19).toInt() + navBarHeight
         win.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, keyboardHeight)
+    }
+
+    private fun navBarHeight(): Int {
+        // WindowManager.currentWindowMetrics is available from API 30 and queries the
+        // WindowManager service directly — reliable regardless of view attachment state.
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            val wm = getSystemService(WindowManager::class.java)
+            wm.currentWindowMetrics.windowInsets
+                .getInsets(WindowInsets.Type.navigationBars()).bottom
+        } else {
+            val resourceId = resources.getIdentifier("navigation_bar_height", "dimen", "android")
+            if (resourceId > 0) resources.getDimensionPixelSize(resourceId) else 0
+        }
     }
 }
