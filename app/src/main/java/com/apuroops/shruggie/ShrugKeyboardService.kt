@@ -30,11 +30,11 @@ class KeyboardRootLayout @JvmOverloads constructor(
 
 class ShrugKeyboardService : InputMethodService() {
 
+    private var backspaceButton: Button? = null
+
     override fun onCreateInputView(): View {
         val density = resources.displayMetrics.density
         val navBarHeight = navBarHeight()
-        // 16dp safety buffer on top of the system gesture inset to ensure our bottom
-        // row clears Samsung's HoneyBoard overlay with comfortable breathing room
         val bottomInset = navBarHeight + (16 * density).toInt()
         val targetHeight = (resources.displayMetrics.heightPixels * 0.19).toInt() + bottomInset
         Log.d(TAG, "onCreateInputView: navBarHeight=$navBarHeight px, bottomInset=$bottomInset px, targetHeight=$targetHeight px")
@@ -50,25 +50,30 @@ class ShrugKeyboardService : InputMethodService() {
             v.getLocationOnScreen(loc)
             val screenHeight = resources.displayMetrics.heightPixels
             val viewBottom = loc[1] + v.height
-            Log.d(TAG, "keyboardView: width=${v.width}px, height=${v.height}px, top=${loc[1]}px, bottom=${viewBottom}px, screen=${screenHeight}px, spaceBelowView=${screenHeight - viewBottom}px")
+            Log.d(TAG, "keyboardView: width=${v.width}px, height=${v.height}px, top=${loc[1]}px, bottom=${viewBottom}px, spaceBelowView=${screenHeight - viewBottom}px")
         }
 
         keyboardView.findViewById<Button>(R.id.shrug_button).setOnClickListener { view ->
             view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
             currentInputConnection?.commitText("¯\\_(ツ)_/¯", 1)
+            updateBackspaceColor()
         }
         keyboardView.findViewById<Button>(R.id.return_button).setOnClickListener { view ->
             view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
             currentInputConnection?.commitText("\n", 1)
+            updateBackspaceColor()
         }
         keyboardView.findViewById<Button>(R.id.space_button).setOnClickListener { view ->
             view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
             currentInputConnection?.commitText(" ", 1)
+            updateBackspaceColor()
         }
-        keyboardView.findViewById<Button>(R.id.backspace_button).setOnClickListener { view ->
+
+        backspaceButton = keyboardView.findViewById(R.id.backspace_button)
+        backspaceButton?.setOnClickListener { view ->
             view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
-            // ¯\_(ツ)_/¯ is exactly 9 characters — delete the whole shruggie at once
-            currentInputConnection?.deleteSurroundingText(9, 0)
+            smartDelete()
+            updateBackspaceColor()
         }
 
         return keyboardView
@@ -77,27 +82,58 @@ class ShrugKeyboardService : InputMethodService() {
     override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {
         super.onStartInputView(info, restarting)
         Log.d(TAG, "onStartInputView: win.attributes.height=${window.window?.attributes?.height}")
+        updateBackspaceColor()
+    }
+
+    override fun onUpdateSelection(
+        oldSelStart: Int, oldSelEnd: Int,
+        newSelStart: Int, newSelEnd: Int,
+        candidatesStart: Int, candidatesEnd: Int
+    ) {
+        super.onUpdateSelection(oldSelStart, oldSelEnd, newSelStart, newSelEnd, candidatesStart, candidatesEnd)
+        updateBackspaceColor()
+    }
+
+    private fun smartDelete() {
+        val ic = currentInputConnection ?: return
+
+        val preceding = ic.getTextBeforeCursor(9, 0)
+        when {
+            // InputConnection blocked — fall back to deleting one character
+            preceding == null -> ic.deleteSurroundingText(1, 0)
+            // Full shruggie immediately before cursor — delete all 9 characters
+            preceding == "¯\\_(ツ)_/¯" -> ic.deleteSurroundingText(9, 0)
+            // Space or newline — delete just that one character
+            preceding.endsWith(" ") || preceding.endsWith("\n") -> ic.deleteSurroundingText(1, 0)
+            // Mid-shruggie, foreign text, or anything else — delete one character
+            else -> ic.deleteSurroundingText(1, 0)
+        }
+    }
+
+    private fun updateBackspaceColor() {
+        val ic = currentInputConnection
+        val accessible = ic != null && ic.getTextBeforeCursor(1, 0) != null
+        val color = if (accessible) COLOR_GREEN else COLOR_RED
+        backspaceButton?.setTextColor(color)
+        Log.d(TAG, "updateBackspaceColor: accessible=$accessible")
     }
 
     private fun navBarHeight(): Int {
         val height = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             val wm = getSystemService(WindowManager::class.java)
-            val insets = wm.currentWindowMetrics.windowInsets
-            Log.d(TAG, "insets navigationBars.bottom:       ${insets.getInsets(WindowInsets.Type.navigationBars()).bottom}")
-            Log.d(TAG, "insets systemBars.bottom:           ${insets.getInsets(WindowInsets.Type.systemBars()).bottom}")
-            Log.d(TAG, "insets tappableElement.bottom:      ${insets.getInsets(WindowInsets.Type.tappableElement()).bottom}")
-            Log.d(TAG, "insets mandatorySystemGestures.bot: ${insets.getInsets(WindowInsets.Type.mandatorySystemGestures()).bottom}")
-            Log.d(TAG, "insets systemGestures.bottom:       ${insets.getInsets(WindowInsets.Type.systemGestures()).bottom}")
-            insets.getInsets(WindowInsets.Type.systemGestures()).bottom
+            wm.currentWindowMetrics.windowInsets
+                .getInsets(WindowInsets.Type.systemGestures()).bottom
         } else {
             val resourceId = resources.getIdentifier("navigation_bar_height", "dimen", "android")
             if (resourceId > 0) resources.getDimensionPixelSize(resourceId) else 0
         }
-        Log.d(TAG, "navBarHeight returning: $height px")
+        Log.d(TAG, "navBarHeight: $height px")
         return height
     }
 
     companion object {
         private const val TAG = "ShrugKeyboard"
+        private const val COLOR_GREEN = 0xFF2E7D32.toInt() // dark green — InputConnection accessible
+        private const val COLOR_RED   = 0xFFC62828.toInt() // dark red   — InputConnection blocked
     }
 }
