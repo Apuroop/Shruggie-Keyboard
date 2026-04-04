@@ -85,7 +85,7 @@ class ShrugKeyboardService : InputMethodService() {
             Log.d(TAG, "insets tappableElement.bottom:      ${insets.getInsets(WindowInsets.Type.tappableElement()).bottom}")
             Log.d(TAG, "insets mandatorySystemGestures.bot: ${insets.getInsets(WindowInsets.Type.mandatorySystemGestures()).bottom}")
             Log.d(TAG, "insets systemGestures.bottom:       ${insets.getInsets(WindowInsets.Type.systemGestures()).bottom}")
-            insets.getInsets(WindowInsets.Type.navigationBars()).bottom
+            insets.getInsets(WindowInsets.Type.systemGestures()).bottom
         } else {
             val resourceId = resources.getIdentifier("navigation_bar_height", "dimen", "android")
             if (resourceId > 0) resources.getDimensionPixelSize(resourceId) else 0
