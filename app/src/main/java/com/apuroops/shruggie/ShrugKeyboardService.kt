@@ -43,7 +43,11 @@ class ShrugKeyboardService : InputMethodService() {
         keyboardView.setPadding(p, p, p, p + navBarHeight)
 
         keyboardView.addOnLayoutChangeListener { v, _, _, _, _, _, _, _, _ ->
-            Log.d(TAG, "keyboardView layout changed: width=${v.width}px, height=${v.height}px")
+            val loc = IntArray(2)
+            v.getLocationOnScreen(loc)
+            val screenHeight = resources.displayMetrics.heightPixels
+            val viewBottom = loc[1] + v.height
+            Log.d(TAG, "keyboardView: width=${v.width}px, height=${v.height}px, top=${loc[1]}px, bottom=${viewBottom}px, screen=${screenHeight}px, spaceBelowView=${screenHeight - viewBottom}px")
         }
 
         keyboardView.findViewById<Button>(R.id.shrug_button).setOnClickListener { view ->
