@@ -1,25 +1,46 @@
 package com.apuroops.shruggie
 
+import android.content.Context
 import android.inputmethodservice.InputMethodService
+import android.os.Build
+import android.util.AttributeSet
 import android.util.Log
 import android.view.HapticFeedbackConstants
 import android.view.View
-import android.view.ViewGroup
+import android.view.WindowInsets
+import android.view.WindowManager
 import android.view.inputmethod.EditorInfo
 import android.widget.Button
+import android.widget.LinearLayout
+
+/**
+ * Custom root layout that enforces a specific height regardless of what the IME
+ * framework's input frame tries to constrain it to via MeasureSpec.
+ */
+class KeyboardRootLayout @JvmOverloads constructor(
+    context: Context, attrs: AttributeSet? = null
+) : LinearLayout(context, attrs) {
+    var forcedHeight: Int = 0
+
+    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+        val h = if (forcedHeight > 0) forcedHeight else MeasureSpec.getSize(heightMeasureSpec)
+        super.onMeasure(widthMeasureSpec, MeasureSpec.makeMeasureSpec(h, MeasureSpec.EXACTLY))
+    }
+}
 
 class ShrugKeyboardService : InputMethodService() {
 
     override fun onCreateInputView(): View {
-        val keyboardView = layoutInflater.inflate(R.layout.keyboard_view, null)
+        val navBarHeight = navBarHeight()
+        val targetHeight = (resources.displayMetrics.heightPixels * 0.19).toInt() + navBarHeight
+        Log.d(TAG, "onCreateInputView: navBarHeight=$navBarHeight px, targetHeight=$targetHeight px")
 
-        // Set an explicit height on the view itself — the IME framework sizes the
-        // window to fit the content, so this is the correct way to control height.
-        // No nav bar compensation needed: the system positions the IME window above
-        // the nav bar automatically.
-        val targetHeight = (resources.displayMetrics.heightPixels * 0.19).toInt()
-        keyboardView.layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, targetHeight)
-        Log.d(TAG, "onCreateInputView: targetHeight=$targetHeight px (screen=${resources.displayMetrics.heightPixels})")
+        val keyboardView = layoutInflater.inflate(R.layout.keyboard_view, null) as KeyboardRootLayout
+        keyboardView.forcedHeight = targetHeight
+
+        // Push content above the nav bar by adding navBarHeight to the bottom padding
+        val p = (8 * resources.displayMetrics.density).toInt()
+        keyboardView.setPadding(p, p, p, p + navBarHeight)
 
         keyboardView.addOnLayoutChangeListener { v, _, _, _, _, _, _, _, _ ->
             Log.d(TAG, "keyboardView layout changed: width=${v.width}px, height=${v.height}px")
@@ -49,6 +70,19 @@ class ShrugKeyboardService : InputMethodService() {
     override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {
         super.onStartInputView(info, restarting)
         Log.d(TAG, "onStartInputView: win.attributes.height=${window.window?.attributes?.height}")
+    }
+
+    private fun navBarHeight(): Int {
+        val height = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            val wm = getSystemService(WindowManager::class.java)
+            wm.currentWindowMetrics.windowInsets
+                .getInsets(WindowInsets.Type.navigationBars()).bottom
+        } else {
+            val resourceId = resources.getIdentifier("navigation_bar_height", "dimen", "android")
+            if (resourceId > 0) resources.getDimensionPixelSize(resourceId) else 0
+        }
+        Log.d(TAG, "navBarHeight: $height px")
+        return height
     }
 
     companion object {
