@@ -2,6 +2,7 @@ package com.apuroops.shruggie
 
 import android.inputmethodservice.InputMethodService
 import android.os.Build
+import android.util.Log
 import android.view.HapticFeedbackConstants
 import android.view.View
 import android.view.ViewGroup
@@ -38,16 +39,26 @@ class ShrugKeyboardService : InputMethodService() {
 
     override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {
         super.onStartInputView(info, restarting)
-        val win = window.window ?: return
+        val win = window.window ?: run {
+            Log.d(TAG, "onStartInputView: window is null, bailing out")
+            return
+        }
+        val screenHeight = resources.displayMetrics.heightPixels
         val navBarHeight = navBarHeight()
-        val keyboardHeight = (resources.displayMetrics.heightPixels * 0.19).toInt() + navBarHeight
+        val keyboardHeight = (screenHeight * 0.19).toInt() + navBarHeight
+        Log.d(TAG, "onStartInputView: screenHeight=$screenHeight px, navBarHeight=$navBarHeight px, keyboardHeight=$keyboardHeight px")
         win.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, keyboardHeight)
+        Log.d(TAG, "onStartInputView: setLayout called with MATCH_PARENT x $keyboardHeight")
+    }
+
+    companion object {
+        private const val TAG = "ShrugKeyboard"
     }
 
     private fun navBarHeight(): Int {
         // WindowManager.currentWindowMetrics is available from API 30 and queries the
         // WindowManager service directly — reliable regardless of view attachment state.
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+        val height = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             val wm = getSystemService(WindowManager::class.java)
             wm.currentWindowMetrics.windowInsets
                 .getInsets(WindowInsets.Type.navigationBars()).bottom
@@ -55,5 +66,7 @@ class ShrugKeyboardService : InputMethodService() {
             val resourceId = resources.getIdentifier("navigation_bar_height", "dimen", "android")
             if (resourceId > 0) resources.getDimensionPixelSize(resourceId) else 0
         }
+        Log.d(TAG, "navBarHeight: API=${Build.VERSION.SDK_INT}, height=$height px")
+        return height
     }
 }
