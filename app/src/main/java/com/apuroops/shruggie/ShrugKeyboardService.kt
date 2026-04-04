@@ -31,16 +31,19 @@ class KeyboardRootLayout @JvmOverloads constructor(
 class ShrugKeyboardService : InputMethodService() {
 
     override fun onCreateInputView(): View {
+        val density = resources.displayMetrics.density
         val navBarHeight = navBarHeight()
-        val targetHeight = (resources.displayMetrics.heightPixels * 0.19).toInt() + navBarHeight
-        Log.d(TAG, "onCreateInputView: navBarHeight=$navBarHeight px, targetHeight=$targetHeight px")
+        // 16dp safety buffer on top of the system gesture inset to ensure our bottom
+        // row clears Samsung's HoneyBoard overlay with comfortable breathing room
+        val bottomInset = navBarHeight + (16 * density).toInt()
+        val targetHeight = (resources.displayMetrics.heightPixels * 0.19).toInt() + bottomInset
+        Log.d(TAG, "onCreateInputView: navBarHeight=$navBarHeight px, bottomInset=$bottomInset px, targetHeight=$targetHeight px")
 
         val keyboardView = layoutInflater.inflate(R.layout.keyboard_view, null) as KeyboardRootLayout
         keyboardView.forcedHeight = targetHeight
 
-        // Push content above the nav bar by adding navBarHeight to the bottom padding
-        val p = (8 * resources.displayMetrics.density).toInt()
-        keyboardView.setPadding(p, p, p, p + navBarHeight)
+        val p = (8 * density).toInt()
+        keyboardView.setPadding(p, p, p, p + bottomInset)
 
         keyboardView.addOnLayoutChangeListener { v, _, _, _, _, _, _, _, _ ->
             val loc = IntArray(2)
