@@ -99,14 +99,8 @@ class ShrugKeyboardService : InputMethodService() {
 
         val preceding = ic.getTextBeforeCursor(SHRUGGIE.length, 0)
         when {
-            // InputConnection blocked — fall back to deleting one character
-            preceding == null -> ic.deleteSurroundingText(1, 0)
-            // Full shruggie immediately before cursor — delete all characters
             preceding == SHRUGGIE -> ic.deleteSurroundingText(SHRUGGIE.length, 0)
-            // Space or newline — delete just that one character
-            preceding.endsWith(" ") || preceding.endsWith("\n") -> ic.deleteSurroundingText(1, 0)
-            // Mid-shruggie, foreign text, or anything else — delete one character
-            else -> ic.deleteSurroundingText(1, 0)
+            else -> ic.deleteSurroundingText(1, 0) // space, newline, mid-shruggie, foreign text, or blocked IC (null)
         }
     }
 
