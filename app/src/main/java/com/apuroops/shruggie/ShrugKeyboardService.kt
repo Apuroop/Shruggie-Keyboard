@@ -55,7 +55,7 @@ class ShrugKeyboardService : InputMethodService() {
 
         keyboardView.findViewById<Button>(R.id.shrug_button).setOnClickListener { view ->
             view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
-            currentInputConnection?.commitText("¯\\_(ツ)_/¯", 1)
+            currentInputConnection?.commitText(SHRUGGIE, 1)
             updateBackspaceColor()
         }
         keyboardView.findViewById<Button>(R.id.return_button).setOnClickListener { view ->
@@ -97,12 +97,12 @@ class ShrugKeyboardService : InputMethodService() {
     private fun smartDelete() {
         val ic = currentInputConnection ?: return
 
-        val preceding = ic.getTextBeforeCursor(9, 0)
+        val preceding = ic.getTextBeforeCursor(SHRUGGIE.length, 0)
         when {
             // InputConnection blocked — fall back to deleting one character
             preceding == null -> ic.deleteSurroundingText(1, 0)
-            // Full shruggie immediately before cursor — delete all 9 characters
-            preceding == "¯\\_(ツ)_/¯" -> ic.deleteSurroundingText(9, 0)
+            // Full shruggie immediately before cursor — delete all characters
+            preceding == SHRUGGIE -> ic.deleteSurroundingText(SHRUGGIE.length, 0)
             // Space or newline — delete just that one character
             preceding.endsWith(" ") || preceding.endsWith("\n") -> ic.deleteSurroundingText(1, 0)
             // Mid-shruggie, foreign text, or anything else — delete one character
@@ -133,6 +133,7 @@ class ShrugKeyboardService : InputMethodService() {
 
     companion object {
         private const val TAG = "ShrugKeyboard"
+        private const val SHRUGGIE = "¯\\_(ツ)_/¯"
         private const val COLOR_GREEN = 0xFF2E7D32.toInt() // dark green — InputConnection accessible
         private const val COLOR_RED   = 0xFFC62828.toInt() // dark red   — InputConnection blocked
     }
